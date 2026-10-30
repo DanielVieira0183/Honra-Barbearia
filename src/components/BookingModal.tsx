@@ -32,6 +32,8 @@ interface BookingModalProps {
   existingAppointments: Appointment[];
   onAddAppointment: (appointment: Appointment) => void;
   initialSelectedService?: BarberService | null;
+  initialSelectedBarber?: Barber | null;
+  favoriteBarberIds?: string[];
   currentUser: User | null;
   onGoogleLogin: () => Promise<void>;
   isLoggingIn: boolean;
@@ -45,6 +47,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   existingAppointments,
   onAddAppointment,
   initialSelectedService,
+  initialSelectedBarber,
+  favoriteBarberIds,
   currentUser,
   onGoogleLogin,
   isLoggingIn,
@@ -99,9 +103,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   // Pre-seleção quando o modal abre
   useEffect(() => {
     if (isOpen) {
+      if (initialSelectedBarber) {
+        setSelectedBarber(initialSelectedBarber);
+      }
       if (initialSelectedService) {
         setSelectedService(initialSelectedService);
-        setStep(2);
+        // Se já tiver serviço e barbeiro definidos, avança para a escolha da data
+        setStep(initialSelectedBarber ? 3 : 2);
+      } else if (initialSelectedBarber) {
+        setSelectedService(services[0] || null);
+        setStep(3);
       } else if (!selectedService) {
         setSelectedService(services[0] || null);
         setStep(1);
@@ -114,7 +125,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         if (!clientEmail && currentUser.email) setClientEmail(currentUser.email);
       }
     }
-  }, [isOpen, initialSelectedService, currentUser, availableDates, services]);
+  }, [isOpen, initialSelectedService, initialSelectedBarber, currentUser, availableDates, services]);
 
   // Lista padrão de horários de funcionamento (09:00 até 19:30)
   const timeSlots = [
@@ -373,6 +384,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               <div className="grid grid-cols-1 gap-3">
                 {barbers.map((barber) => {
                   const isSelected = selectedBarber?.id === barber.id;
+                  const isFav = favoriteBarberIds?.includes(barber.id);
                   return (
                     <div
                       key={barber.id}
@@ -380,18 +392,38 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       className={`cursor-pointer p-4 rounded-xl border flex items-center justify-between transition-all ${
                         isSelected
                           ? 'bg-[#D4AF37]/10 border-[#D4AF37]'
+                          : isFav
+                          ? 'bg-[#1C1C24] border-[#D4AF37]/40 hover:border-[#D4AF37]'
                           : 'bg-[#1C1C22] border-[#292934] hover:border-[#3E3E4C]'
                       }`}
                     >
                       <div className="flex items-center gap-3.5">
-                        <img
-                          src={barber.avatarUrl}
-                          alt={barber.name}
-                          className="w-12 h-12 rounded-full object-cover border border-[#3E3E4C]"
-                        />
+                        <div className="relative">
+                          <img
+                            src={barber.avatarUrl}
+                            alt={barber.name}
+                            className={`w-12 h-12 rounded-full object-cover border ${
+                              isFav ? 'border-[#D4AF37]' : 'border-[#3E3E4C]'
+                            }`}
+                          />
+                          {isFav && (
+                            <span
+                              title="Seu Barbeiro Favorito"
+                              className="absolute -bottom-1 -right-1 bg-[#D4AF37] text-[#121215] text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow"
+                            >
+                              ★
+                            </span>
+                          )}
+                        </div>
                         <div>
-                          <div className="font-bold text-sm text-[#F4F4EE]">
-                            {barber.name}
+                          <div className="font-bold text-sm text-[#F4F4EE] flex items-center gap-2">
+                            <span>{barber.name}</span>
+                            {isFav && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 font-semibold flex items-center gap-1">
+                                <span>★</span>
+                                <span>Favorito</span>
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-[#D4AF37] font-medium">
                             {barber.role} · {barber.experienceYears} anos de exp.

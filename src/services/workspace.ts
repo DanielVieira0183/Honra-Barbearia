@@ -7,8 +7,21 @@ import {
   User,
   signOut
 } from 'firebase/auth';
-import firebaseConfig from '../../firebase-applet-config.json';
+import rawFirebaseConfig from '../../firebase-applet-config.json';
 import { Appointment, Barber, BarberService } from '../types';
+
+// Carregar chaves de API exclusivamente de variáveis de ambiente seguras (.env)
+const firebaseApiKey = import.meta.env.VITE_FIREBASE_API_KEY || rawFirebaseConfig.apiKey || '';
+
+const firebaseConfig = {
+  ...rawFirebaseConfig,
+  apiKey: firebaseApiKey,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || rawFirebaseConfig.projectId || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || rawFirebaseConfig.appId || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || rawFirebaseConfig.authDomain || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || rawFirebaseConfig.storageBucket || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || rawFirebaseConfig.messagingSenderId || '',
+};
 
 // Inicializar Firebase singleton
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -60,6 +73,9 @@ export const initAuth = (
 };
 
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
+  if (!firebaseApiKey) {
+    throw new Error('Chave de API do Firebase não configurada. Defina VITE_FIREBASE_API_KEY no arquivo .env.');
+  }
   try {
     isSigningIn = true;
     const result = await signInWithPopup(auth, provider);

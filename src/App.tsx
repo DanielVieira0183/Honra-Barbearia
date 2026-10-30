@@ -126,8 +126,37 @@ export default function App() {
     }
   });
   const [selectedServiceToBook, setSelectedServiceToBook] = useState<BarberService | null>(null);
+  const [selectedBarberToBook, setSelectedBarberToBook] = useState<Barber | null>(null);
+  const [favoriteBarberIds, setFavoriteBarberIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('nh_barber_favorites');
+      return saved ? JSON.parse(saved) : ['barber-marcos'];
+    } catch {
+      return ['barber-marcos'];
+    }
+  });
   const [isAdminView, setIsAdminView] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleToggleFavoriteBarber = (barberId: string) => {
+    const barber = barbers.find((b) => b.id === barberId);
+    const isFav = favoriteBarberIds.includes(barberId);
+    const next = isFav
+      ? favoriteBarberIds.filter((id) => id !== barberId)
+      : [...favoriteBarberIds, barberId];
+    setFavoriteBarberIds(next);
+    try {
+      localStorage.setItem('nh_barber_favorites', JSON.stringify(next));
+    } catch (e) {
+      console.warn('Erro ao salvar favoritos:', e);
+    }
+    const firstName = barber?.name.split(' ')[0] || 'Barbeiro';
+    setToastMessage(
+      isFav
+        ? `${firstName} foi removido dos seus favoritos.`
+        : `⭐ ${firstName} agora é seu barbeiro favorito!`
+    );
+  };
 
   // Clube de Fidelidade com persistência
   const [loyalty, setLoyalty] = useState<LoyaltyAccount>(() => {
@@ -280,8 +309,9 @@ export default function App() {
     showToast('Conta desconectada do Google.');
   };
 
-  const handleOpenBooking = (service?: BarberService) => {
+  const handleOpenBooking = (service?: BarberService, barber?: Barber) => {
     setSelectedServiceToBook(service || null);
+    setSelectedBarberToBook(barber || null);
     setIsBookingOpen(true);
   };
 
@@ -579,9 +609,10 @@ export default function App() {
             {/* 6. Equipe de Barbeiros Especialistas */}
             <TeamSection
               barbers={barbers}
+              favoriteBarberIds={favoriteBarberIds}
+              onToggleFavorite={handleToggleFavoriteBarber}
               onSelectBarberToBook={(barber) => {
-                setSelectedServiceToBook(services[0]);
-                setIsBookingOpen(true);
+                handleOpenBooking(services[0], barber);
               }}
             />
 
@@ -606,12 +637,15 @@ export default function App() {
         onClose={() => {
           setIsBookingOpen(false);
           setSelectedServiceToBook(null);
+          setSelectedBarberToBook(null);
         }}
         services={services}
         barbers={barbers}
         existingAppointments={appointments}
         onAddAppointment={handleAddAppointment}
         initialSelectedService={selectedServiceToBook}
+        initialSelectedBarber={selectedBarberToBook}
+        favoriteBarberIds={favoriteBarberIds}
         currentUser={currentUser}
         onGoogleLogin={handleGoogleLogin}
         isLoggingIn={isLoggingIn}
