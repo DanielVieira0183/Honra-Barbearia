@@ -1,0 +1,6 @@
+{
+  "name": "Navalha & Honra - Barbearia e Agendamento Online",
+  "description": "Sistema de agendamento online para barbearia com catálogo de serviços, galeria de cortes, avaliações de clientes, blog masculino e sincronização com Google Calendar e Google Tasks.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

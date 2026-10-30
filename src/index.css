@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  body {
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, .font-serif-display {
+    font-family: var(--font-serif);
+  }
+}
+
+/* Scrollbar estilizada sutil para tema escuro */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #141417;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c2c34;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f4a;
+}
