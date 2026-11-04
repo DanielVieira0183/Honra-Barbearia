@@ -14,6 +14,11 @@ import {
   AlertCircle,
   ExternalLink,
   ShieldCheck,
+  MessageCircle,
+  Copy,
+  CheckCheck,
+  MessageSquare,
+  Smartphone,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { Appointment, Barber, BarberService } from '../types';
@@ -78,6 +83,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [isResendingEmail, setIsResendingEmail] = useState(false);
   const [createdAppointment, setCreatedAppointment] = useState<Appointment | null>(null);
   const [calendarLink, setCalendarLink] = useState<string | null>(null);
+
+  // Opção de Lembrete via WhatsApp com mensagem pré-formatada
+  const [requestWhatsAppReminder, setRequestWhatsAppReminder] = useState(true);
+  const [whatsAppData, setWhatsAppData] = useState<{ url: string; text: string } | null>(null);
+  const [copiedWhatsApp, setCopiedWhatsApp] = useState(false);
+
+  // Opção e dados de Lembrete via SMS (API de mensagens do dispositivo)
+  const [smsData, setSmsData] = useState<{ url: string; text: string } | null>(null);
+  const [copiedSms, setCopiedSms] = useState(false);
 
   // Inicializar datas disponíveis (hoje + próximos 14 dias)
   const availableDates = React.useMemo(() => {
@@ -232,6 +246,51 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           console.warn('Aviso Gmail:', err);
           setEmailError(err.message || 'Falha ao disparar e-mail de confirmação');
         }
+      }
+    }
+
+    // Gerar mensagem e URL pré-formatada para lembrete via WhatsApp com serviço, data e barbeiro
+    const formattedDate = selectedDate.split('-').reverse().join('/');
+    const whatsAppText =
+`💈 *LEMBRETE DE AGENDAMENTO - NAVALHA & HONRA*
+
+Olá! Gostaria de confirmar meu agendamento e solicitar o envio de lembrete via WhatsApp:
+
+📋 *DETALHES DO AGENDAMENTO:*
+• *Código da Reserva:* #${newAppointment.id}
+• *Cliente:* ${newAppointment.clientName}
+• *Serviço:* ${selectedService.name} (${selectedService.durationMinutes} min)
+• *Mestre Barbeiro:* ${targetBarber.name}
+• *Data:* ${formattedDate}
+• *Horário:* às ${newAppointment.time}
+• *Valor no Local:* R$ ${selectedService.price.toFixed(2)}
+• *Local:* Rua Augusta, 1500 · Jardins, São Paulo - SP
+
+Por favor, enviem a confirmação e o lembrete antes do horário marcado. Muito obrigado!`;
+
+    const whatsAppUrl = `https://wa.me/5511999998888?text=${encodeURIComponent(whatsAppText)}`;
+    setWhatsAppData({ url: whatsAppUrl, text: whatsAppText });
+
+    // Gerar mensagem e URI pré-formatada para lembrete via SMS (API nativa de mensagens do dispositivo)
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const smsSeparator = isIOS ? '&' : '?';
+    const smsText = 
+`Navalha & Honra: Solicitacao de lembrete para reserva #${newAppointment.id}.
+Cliente: ${newAppointment.clientName}
+Servico: ${selectedService.name} (R$ ${selectedService.price.toFixed(2)})
+Barbeiro: ${targetBarber.name}
+Data: ${formattedDate} as ${newAppointment.time}
+Local: Rua Augusta, 1500 - Jardins, SP. Favor confirmar envio do lembrete!`;
+
+    const smsUrl = `sms:+5511999998888${smsSeparator}body=${encodeURIComponent(smsText)}`;
+    setSmsData({ url: smsUrl, text: smsText });
+
+    // Se o cliente marcou para abrir lembrete via WhatsApp, aciona a abertura
+    if (requestWhatsAppReminder) {
+      try {
+        window.open(whatsAppUrl, '_blank');
+      } catch (err) {
+        console.warn('Pop-up bloqueado, o link direto permanece disponível na tela:', err);
       }
     }
 
@@ -705,6 +764,49 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               </div>
 
+              {/* Opção Nova: Solicitar Lembrete via WhatsApp com Mensagem Pré-formatada */}
+              <div className="p-4 rounded-xl bg-[#141419] border border-[#25D366]/40 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-[#25D366]/20 text-[#25D366] flex items-center justify-center font-bold">
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-[#F4F4EE]">
+                      Lembrete via WhatsApp
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-semibold text-[#25D366] bg-[#25D366]/10 px-2 py-0.5 rounded-full border border-[#25D366]/30">
+                    Recomendado
+                  </span>
+                </div>
+
+                <label className="flex items-start gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={requestWhatsAppReminder}
+                    onChange={(e) => setRequestWhatsAppReminder(e.target.checked)}
+                    className="rounded accent-[#25D366] w-4 h-4 mt-0.5 cursor-pointer"
+                  />
+                  <div className="text-xs text-[#D4D4D8]">
+                    <div className="font-semibold text-[#F4F4EE]">
+                      Solicitar lembrete via WhatsApp com detalhes do serviço, data e barbeiro
+                    </div>
+                    <div className="text-[11px] text-[#A1A1AA] mt-0.5 leading-relaxed">
+                      Ao concluir, abre o WhatsApp com mensagem pré-formatada pronta contendo código, serviço, data e mestre barbeiro.
+                    </div>
+                  </div>
+                </label>
+
+                {requestWhatsAppReminder && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-[#0F1412] border border-[#25D366]/25 text-[11px] text-[#A1A1AA] flex items-start gap-2">
+                    <span className="text-[#25D366] font-bold shrink-0">Mensagem pronta:</span>
+                    <span className="text-[#D4D4D8] truncate">
+                      "💈 LEMBRETE: {selectedService?.name || 'Serviço'} com {selectedBarber?.id === 'any' ? 'Barbeiro' : (selectedBarber?.name || 'Barbeiro')} em {selectedDate.split('-').reverse().join('/')} às {selectedTime}..."
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Botões de Ação do Passo 4 */}
               <div className="pt-2 flex items-center justify-between gap-3">
                 <button
@@ -848,25 +950,134 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
               )}
 
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <a
-                  href={`https://wa.me/5511999998888?text=Ol%C3%A1!%20Acabei%20de%20agendar%20o%20servi%C3%A7o%20${encodeURIComponent(
-                    selectedService?.name || ''
-                  )}%20para%20o%20dia%20${createdAppointment.date}%20%C3%A0s%20${createdAppointment.time}%20(C%C3%B3digo%20${createdAppointment.id}).`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-[#25D366] text-[#121215] font-bold text-xs hover:bg-[#20ba5a] transition-all flex items-center justify-center gap-2"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>Salvar Comprovante no WhatsApp</span>
-                </a>
+              {/* Card de Lembrete via WhatsApp com Mensagem Pré-Formatada */}
+              {whatsAppData && (
+                <div className="max-w-md mx-auto p-4 rounded-xl bg-gradient-to-br from-[#122219] to-[#141C18] border border-[#25D366]/50 text-left space-y-3 shadow-lg shadow-black/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#25D366] text-[#121215] flex items-center justify-center font-bold shadow-md shadow-[#25D366]/30">
+                        <MessageCircle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#F4F4EE]">
+                          Lembrete via WhatsApp
+                        </div>
+                        <div className="text-[11px] text-[#25D366] font-medium">
+                          Mensagem pronta com serviço, data e barbeiro
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#A1A1AA] bg-[#0E1712] px-2 py-0.5 rounded border border-[#25D366]/30">
+                      (11) 99999-8888
+                    </span>
+                  </div>
 
+                  <div className="p-3 rounded-lg bg-[#0C1410] border border-[#25D366]/20 text-[11px] font-mono text-[#D4D4D8] whitespace-pre-line max-h-36 overflow-y-auto leading-relaxed">
+                    {whatsAppData.text}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                    <a
+                      href={whatsAppData.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#20ba5a] text-[#121215] font-bold text-xs transition-all shadow-md shadow-[#25D366]/20 cursor-pointer"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>Abrir WhatsApp com Lembrete</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(whatsAppData.text);
+                        setCopiedWhatsApp(true);
+                        setTimeout(() => setCopiedWhatsApp(false), 3000);
+                      }}
+                      className="px-3.5 py-2.5 rounded-lg bg-[#18261E] hover:bg-[#203429] text-xs font-medium text-[#25D366] border border-[#25D366]/40 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {copiedWhatsApp ? (
+                        <>
+                          <CheckCheck className="w-3.5 h-3.5 text-[#25D366]" />
+                          <span>Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copiar Texto</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Card e Botão: Receber Lembrete via SMS (API de Mensagens do Dispositivo) */}
+              {smsData && (
+                <div className="max-w-md mx-auto p-4 rounded-xl bg-gradient-to-br from-[#121824] to-[#151D28] border border-[#38BDF8]/40 text-left space-y-3 shadow-lg shadow-black/40">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-[#38BDF8] text-[#0F172A] flex items-center justify-center font-bold shadow-md shadow-[#38BDF8]/20">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-[#F4F4EE]">
+                          Lembrete via SMS
+                        </div>
+                        <div className="text-[11px] text-[#38BDF8] font-medium">
+                          Mensagem nativa do dispositivo pré-formatada
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono text-[#A1A1AA] bg-[#0F172A] px-2 py-0.5 rounded border border-[#38BDF8]/30">
+                      +55 11 99999-8888
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-lg bg-[#0C111A] border border-[#38BDF8]/20 text-[11px] font-mono text-[#D4D4D8] whitespace-pre-line max-h-36 overflow-y-auto leading-relaxed">
+                    {smsData.text}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+                    <a
+                      href={smsData.url}
+                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#38BDF8] hover:bg-[#0EA5E9] text-[#0F172A] font-bold text-xs transition-all shadow-md shadow-[#38BDF8]/20 cursor-pointer"
+                      title="Abrir aplicativo nativo de SMS do dispositivo com a mensagem preenchida"
+                    >
+                      <Smartphone className="w-4 h-4" />
+                      <span>Receber Lembrete via SMS</span>
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(smsData.text);
+                        setCopiedSms(true);
+                        setTimeout(() => setCopiedSms(false), 3000);
+                      }}
+                      className="px-3.5 py-2.5 rounded-lg bg-[#162232] hover:bg-[#1E2E42] text-xs font-medium text-[#38BDF8] border border-[#38BDF8]/40 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {copiedSms ? (
+                        <>
+                          <CheckCheck className="w-3.5 h-3.5 text-[#38BDF8]" />
+                          <span>Copiado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5" />
+                          <span>Copiar SMS</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#272732] text-[#F4F4EE] text-xs font-semibold hover:bg-[#343442] transition-colors"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#272732] text-[#F4F4EE] text-xs font-semibold hover:bg-[#343442] transition-colors cursor-pointer"
                 >
-                  Fechar
+                  Concluir e Fechar
                 </button>
               </div>
             </div>

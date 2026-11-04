@@ -12,6 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   Mail,
+  Smartphone,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { Appointment, Barber, BarberService, LoyaltyAccount } from '../types';
@@ -274,6 +275,47 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                               <Mail className="w-3 h-3" />
                               <span>{sendingEmailId === app.id ? 'Enviando...' : (app.emailSent ? 'Reenviar E-mail' : 'Enviar E-mail')}</span>
                             </button>
+                          )}
+
+                          {app.status === 'confirmed' && (
+                            <a
+                              href={`https://wa.me/5511999998888?text=${encodeURIComponent(
+                                `💈 *LEMBRETE DE AGENDAMENTO - NAVALHA & HONRA*\n\n` +
+                                `Olá! Gostaria de confirmar e solicitar o lembrete da minha reserva:\n` +
+                                `• *Código:* #${app.id}\n` +
+                                `• *Cliente:* ${app.clientName}\n` +
+                                `• *Serviço:* ${svc?.name} (${svc?.durationMinutes} min)\n` +
+                                `• *Barbeiro:* ${brb?.name}\n` +
+                                `• *Data:* ${app.date.split('-').reverse().join('/')} às ${app.time}\n` +
+                                `• *Valor:* R$ ${(svc?.price || 0).toFixed(2)}\n` +
+                                `• *Local:* Rua Augusta, 1500 · Jardins, São Paulo - SP`
+                              )}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 text-[11px] font-semibold transition-colors cursor-pointer"
+                              title="Abrir WhatsApp com detalhes pré-formatados do agendamento"
+                            >
+                              <Phone className="w-3 h-3" />
+                              <span>Lembrete WhatsApp</span>
+                            </a>
+                          )}
+
+                          {app.status === 'confirmed' && (
+                            <a
+                              href={`sms:+5511999998888?body=${encodeURIComponent(
+                                `Navalha & Honra: Solicitacao de lembrete para reserva #${app.id}.\n` +
+                                `Cliente: ${app.clientName}\n` +
+                                `Servico: ${svc?.name || 'Serviço'}\n` +
+                                `Barbeiro: ${brb?.name || 'Barbeiro'}\n` +
+                                `Data: ${app.date.split('-').reverse().join('/')} as ${app.time}\n` +
+                                `Local: Rua Augusta, 1500 - Jardins, SP.`
+                              )}`}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#38BDF8]/40 text-[#38BDF8] hover:bg-[#38BDF8]/10 text-[11px] font-semibold transition-colors cursor-pointer"
+                              title="Abrir aplicativo de SMS do dispositivo com mensagem pré-formatada"
+                            >
+                              <Smartphone className="w-3 h-3" />
+                              <span>Lembrete SMS</span>
+                            </a>
                           )}
 
                           {app.status === 'confirmed' && (

@@ -97,7 +97,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               {/* Moldura da imagem com borda dourada suave */}
               <div className="relative rounded-2xl overflow-hidden border border-[#2E2E38] shadow-2xl bg-[#18181D]">
                 <img
-                  src="/assets/barbers/photo-1503951914875-452162b0f3f1.jpg"
+                  src="https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=1000&q=80"
                   alt="Barbeiro profissional cuidando de corte navalhado"
                   className="w-full h-[420px] object-cover filter brightness-[0.92] contrast-[1.05]"
                   loading="eager"

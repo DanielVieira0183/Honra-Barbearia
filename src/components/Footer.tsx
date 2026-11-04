@@ -96,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenBooking }) => {
             <ul className="space-y-2 text-xs text-[#D4D4D8]">
               <li>
                 <a
-                  href="https://wa.me/5511999998888"
+                  href="https://wa.me/5561996324598"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 hover:text-[#25D366] transition-colors"
