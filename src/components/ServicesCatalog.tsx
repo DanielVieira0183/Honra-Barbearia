@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Clock, Scissors, Share2, Search, X, Star } from 'lucide-react';
+import { Clock, Scissors, Share2, Search, X, Star, CalendarClock, Sparkles } from 'lucide-react';
 import { BarberService, ServiceCategory } from '../types';
 
 interface ServicesCatalogProps {
@@ -27,6 +27,9 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
     }
   });
 
+  // Estado dos serviços selecionados no simulador de planejamento de tempo de visita
+  const [plannedServiceIds, setPlannedServiceIds] = useState<string[]>([]);
+
   const toggleFavorite = (serviceId: string, serviceName: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setFavoriteIds((prev) => {
@@ -45,6 +48,13 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
       setTimeout(() => setToastMessage(null), 3000);
       return next;
     });
+  };
+
+  const togglePlannedService = (serviceId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setPlannedServiceIds((prev) =>
+      prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId]
+    );
   };
 
   const categories: { id: ServiceCategory | 'favoritos'; label: string }[] = [
@@ -86,6 +96,37 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
       return bFav - aFav;
     });
   }, [services, activeCategory, searchQuery, favoriteIds]);
+
+  // Estatísticas de tempo estimado para a listagem
+  const timeStats = useMemo(() => {
+    if (filteredAndSortedServices.length === 0) return { min: 0, max: 0, avg: 0, total: 0 };
+    const durations = filteredAndSortedServices.map((s) => s.durationMinutes);
+    const min = Math.min(...durations);
+    const max = Math.max(...durations);
+    const total = durations.reduce((acc, curr) => acc + curr, 0);
+    const avg = Math.round(total / durations.length);
+    return { min, max, avg, total };
+  }, [filteredAndSortedServices]);
+
+  // Serviços em planejamento ativo
+  const plannedServices = useMemo(() => {
+    return services.filter((s) => plannedServiceIds.includes(s.id));
+  }, [services, plannedServiceIds]);
+
+  const totalPlannedMinutes = useMemo(() => {
+    return plannedServices.reduce((acc, s) => acc + s.durationMinutes, 0);
+  }, [plannedServices]);
+
+  const totalPlannedPrice = useMemo(() => {
+    return plannedServices.reduce((acc, s) => acc + s.price, 0);
+  }, [plannedServices]);
+
+  const formatDurationText = (minutes: number) => {
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return mins > 0 ? `${hours}h ${mins}min` : `${hours}h`;
+  };
 
   return (
     <section id="servicos" className="py-20 border-b border-[#26262B]">
@@ -168,6 +209,131 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
           </div>
         )}
 
+        {/* Indicador Visual de 'Tempo Estimado' Total & Planejamento de Visita */}
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-[#17171F] via-[#1A1A24] to-[#17171F] border border-[#2D2D3B] p-5 sm:p-6 shadow-xl shadow-black/30">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#262633]">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] flex items-center justify-center shrink-0 shadow-inner">
+                <CalendarClock className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-serif-display text-lg font-bold text-[#F4F4EE]">
+                    Tempo Estimado de Visita
+                  </h3>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30">
+                    Planejamento
+                  </span>
+                </div>
+                <p className="text-xs text-[#A1A1AA] mt-0.5 max-w-xl">
+                  Planeje sua agenda com precisão. Conheça o tempo médio de cada ritual e calcule o tempo total estimado de permanência na barbearia.
+                </p>
+              </div>
+            </div>
+
+            {/* Estatísticas de Tempo dos Serviços Exibidos */}
+            <div className="flex flex-wrap items-center gap-2 self-start lg:self-auto">
+              <div className="px-3 py-1.5 rounded-xl bg-[#121217] border border-[#2A2A38] text-xs flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="text-[#8E8E98]">Média por serviço:</span>
+                <span className="font-mono font-bold text-[#F4F4EE]">~{timeStats.avg} min</span>
+              </div>
+              <div className="px-3 py-1.5 rounded-xl bg-[#121217] border border-[#2A2A38] text-xs flex items-center gap-2">
+                <span className="text-[#8E8E98]">Faixa de duração:</span>
+                <span className="font-mono font-bold text-[#D4AF37]">
+                  {timeStats.min} a {timeStats.max} min
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Totalizador Interativo de Tempo de Visita */}
+          {plannedServices.length > 0 ? (
+            <div className="mt-4 p-4 rounded-xl bg-[#121620] border border-[#38BDF8]/40 space-y-3 animate-fade-in">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#38BDF8]/20 text-[#38BDF8] flex items-center justify-center font-bold shrink-0">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-[#94A3B8]">
+                      Tempo Estimado Total da sua Visita ({plannedServices.length} {plannedServices.length === 1 ? 'serviço' : 'serviços'}):
+                    </div>
+                    <div className="flex flex-wrap items-baseline gap-2 mt-0.5">
+                      <span className="font-mono text-xl sm:text-2xl font-bold text-[#38BDF8]">
+                        {formatDurationText(totalPlannedMinutes)}
+                      </span>
+                      <span className="text-xs text-[#94A3B8] font-mono">
+                        ({totalPlannedMinutes} minutos)
+                      </span>
+                      <span className="text-xs text-[#64748B]">·</span>
+                      <span className="text-xs font-bold text-[#F4F4EE]">
+                        R$ {totalPlannedPrice.toFixed(2)} total estimado
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPlannedServiceIds([])}
+                    className="px-3 py-1.5 rounded-lg border border-[#2D3748] text-xs text-[#A1A1AA] hover:text-[#F4F4EE] hover:bg-[#1A2230] transition-colors cursor-pointer"
+                  >
+                    Limpar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSelectServiceToBook(plannedServices[0])}
+                    className="px-4 py-2 rounded-lg bg-[#38BDF8] hover:bg-[#0EA5E9] text-[#0F172A] font-bold text-xs transition-all shadow-md shadow-[#38BDF8]/20 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Scissors className="w-3.5 h-3.5" />
+                    <span>Agendar com Este Tempo</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chips dos Serviços Planejados */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-[#1E293B]">
+                <span className="text-[11px] text-[#94A3B8] font-medium">Serviços no cálculo:</span>
+                {plannedServices.map((svc) => (
+                  <span
+                    key={svc.id}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#16202E] border border-[#2B3A4F] text-xs text-[#E2E8F0]"
+                  >
+                    <span>{svc.name}</span>
+                    <span className="text-[#38BDF8] font-mono text-[11px]">({svc.durationMinutes} min)</span>
+                    <button
+                      type="button"
+                      onClick={() => togglePlannedService(svc.id)}
+                      className="text-[#94A3B8] hover:text-red-400 ml-0.5 cursor-pointer"
+                      title="Remover do cálculo"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs bg-[#121217]/60 p-3.5 rounded-xl border border-[#242430]">
+              <div className="flex items-center gap-2 text-[#A1A1AA]">
+                <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
+                <span>
+                  <strong>Planeje sua visita:</strong> Clique em <strong>&ldquo;+ Planejar Tempo&rdquo;</strong> em qualquer card abaixo para somar o tempo total estimado de múltiplos procedimentos.
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-[11px] text-[#8E8E98] shrink-0 font-mono">
+                <span>⚡ Expresso: ~20-25 min</span>
+                <span>·</span>
+                <span>✂️ Corte: ~45 min</span>
+                <span>·</span>
+                <span>👑 VIP: ~80 min</span>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Grid de Serviços */}
         {filteredAndSortedServices.length === 0 ? (
           <div className="text-center py-16 px-4 bg-[#17171C] border border-[#272730] rounded-2xl max-w-lg mx-auto">
@@ -192,26 +358,36 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredAndSortedServices.map((service) => {
               const isFavorite = favoriteIds.includes(service.id);
+              const isPlanned = plannedServiceIds.includes(service.id);
 
               return (
                 <div
                   key={service.id}
                   className={`group relative flex flex-col justify-between rounded-2xl p-6 transition-all duration-300 hover:shadow-xl hover:shadow-black/40 ${
-                    isFavorite
+                    isPlanned
+                      ? 'bg-gradient-to-b from-[#131C28] via-[#16202C] to-[#121822] border-2 border-[#38BDF8] shadow-lg shadow-[#38BDF8]/10 ring-1 ring-[#38BDF8]/30'
+                      : isFavorite
                       ? 'bg-gradient-to-b from-[#1E1C1F] via-[#1A1920] to-[#16161B] border-2 border-[#D4AF37]/60 shadow-lg shadow-[#D4AF37]/5 ring-1 ring-[#D4AF37]/20'
                       : 'bg-[#17171C] border border-[#272730] hover:border-[#D4AF37]/50'
                   }`}
                 >
                   {/* Top-Right Badges & Botão de Favoritar */}
                   <div className="absolute top-4 right-4 flex items-center gap-1.5 z-10">
-                    {isFavorite && (
+                    {isPlanned && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F172A] bg-[#38BDF8] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                        <Clock className="w-3 h-3 text-[#0F172A]" />
+                        No Plano ({service.durationMinutes}m)
+                      </span>
+                    )}
+
+                    {isFavorite && !isPlanned && (
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[#121215] bg-[#D4AF37] px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
                         <Star className="w-3 h-3 fill-[#121215]" />
                         Destaque Favorito
                       </span>
                     )}
 
-                    {service.badge && !isFavorite && (
+                    {service.badge && !isFavorite && !isPlanned && (
                       <div className="text-[11px] font-semibold tracking-wider uppercase text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
                         {service.badge}
                       </div>
@@ -268,10 +444,28 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => togglePlannedService(service.id, e)}
+                        className={`px-2.5 py-2 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer ${
+                          isPlanned
+                            ? 'bg-[#38BDF8]/20 border-[#38BDF8] text-[#38BDF8] shadow-sm'
+                            : 'bg-[#202027] border-[#2E2E38] text-[#A1A1AA] hover:text-[#38BDF8] hover:border-[#38BDF8]/50'
+                        }`}
+                        title={
+                          isPlanned
+                            ? 'Remover do cálculo de tempo total da visita'
+                            : 'Adicionar ao cálculo de tempo total da visita'
+                        }
+                      >
+                        <Clock className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{isPlanned ? 'No Plano' : '+ Planejar'}</span>
+                      </button>
+
                       <button
                         onClick={() => onShareService(service)}
-                        className="p-2.5 rounded-lg bg-[#202027] text-[#A1A1AA] hover:text-[#D4AF37] hover:bg-[#2A2A34] transition-colors border border-[#2E2E38] cursor-pointer"
+                        className="p-2 rounded-lg bg-[#202027] text-[#A1A1AA] hover:text-[#D4AF37] hover:bg-[#2A2A34] transition-colors border border-[#2E2E38] cursor-pointer"
                         title="Compartilhar este serviço"
                         aria-label={`Compartilhar ${service.name}`}
                       >
@@ -280,7 +474,7 @@ export const ServicesCatalog: React.FC<ServicesCatalogProps> = ({
 
                       <button
                         onClick={() => onSelectServiceToBook(service)}
-                        className="px-4 py-2.5 rounded-lg bg-[#D4AF37] text-[#121215] font-semibold text-xs sm:text-sm hover:bg-[#E5C058] active:scale-95 transition-all shadow-md shadow-[#D4AF37]/10 flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
+                        className="px-3.5 py-2 rounded-lg bg-[#D4AF37] text-[#121215] font-semibold text-xs sm:text-sm hover:bg-[#E5C058] active:scale-95 transition-all shadow-md shadow-[#D4AF37]/10 flex items-center gap-1.5 whitespace-nowrap cursor-pointer"
                       >
                         <Scissors className="w-4 h-4" />
                         <span>Agendar</span>
