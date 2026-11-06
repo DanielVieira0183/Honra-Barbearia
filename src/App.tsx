@@ -26,6 +26,7 @@ import { SocialFeedSection } from './components/SocialFeedSection';
 import { TeamSection } from './components/TeamSection';
 import { FAQSection } from './components/FAQSection';
 import { BarberAdminDashboard } from './components/BarberAdminDashboard';
+import { BarberLoginModal } from './components/BarberLoginModal';
 import { BookingModal } from './components/BookingModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
@@ -136,7 +137,50 @@ export default function App() {
     }
   });
   const [isAdminView, setIsAdminView] = useState(false);
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem('nh_barber_admin_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const [isBarberLoginModalOpen, setIsBarberLoginModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleToggleAdminView = () => {
+    if (isAdminView) {
+      setIsAdminView(false);
+    } else {
+      if (isAdminAuthenticated) {
+        setIsAdminView(true);
+      } else {
+        setIsBarberLoginModalOpen(true);
+      }
+    }
+  };
+
+  const handleAdminLoginSuccess = () => {
+    setIsAdminAuthenticated(true);
+    try {
+      sessionStorage.setItem('nh_barber_admin_auth', 'true');
+    } catch (e) {
+      console.warn('Erro ao salvar auth:', e);
+    }
+    setIsBarberLoginModalOpen(false);
+    setIsAdminView(true);
+    showToast('🔐 Acesso autorizado! Bem-vindo ao Painel do Barbeiro.');
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthenticated(false);
+    try {
+      sessionStorage.removeItem('nh_barber_admin_auth');
+    } catch (e) {
+      console.warn('Erro ao remover auth:', e);
+    }
+    setIsAdminView(false);
+    showToast('Sessão do Painel do Barbeiro encerrada.');
+  };
 
   const handleToggleFavoriteBarber = (barberId: string) => {
     const barber = barbers.find((b) => b.id === barberId);
@@ -544,7 +588,7 @@ export default function App() {
       <Navbar
         onOpenBooking={() => handleOpenBooking()}
         isAdminView={isAdminView}
-        onToggleAdminView={() => setIsAdminView(!isAdminView)}
+        onToggleAdminView={handleToggleAdminView}
         currentUser={currentUser}
         onGoogleLogin={handleGoogleLogin}
         onGoogleLogout={handleGoogleLogout}
@@ -567,6 +611,7 @@ export default function App() {
             onScheduleOneDayReminder={handleScheduleOneDayReminder}
             onScheduleAllReminders={handleScheduleAllReminders}
             onRescheduleAppointment={handleRescheduleAppointment}
+            onLogout={handleAdminLogout}
           />
         ) : (
           <>
@@ -683,6 +728,13 @@ export default function App() {
           setIsNotificationsOpen(false);
           handleOpenBooking();
         }}
+      />
+
+      {/* Modal de Autenticação Segura para o Painel do Barbeiro */}
+      <BarberLoginModal
+        isOpen={isBarberLoginModalOpen}
+        onClose={() => setIsBarberLoginModalOpen(false)}
+        onLoginSuccess={handleAdminLoginSuccess}
       />
     </div>
   );

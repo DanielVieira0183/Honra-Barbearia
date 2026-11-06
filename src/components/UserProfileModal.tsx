@@ -279,24 +279,24 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
                           {app.status === 'confirmed' && (
                             <a
-                              href={`https://wa.me/5511999998888?text=${encodeURIComponent(
-                                `💈 *LEMBRETE DE AGENDAMENTO - NAVALHA & HONRA*\n\n` +
-                                `Olá! Gostaria de confirmar e solicitar o lembrete da minha reserva:\n` +
-                                `• *Código:* #${app.id}\n` +
-                                `• *Cliente:* ${app.clientName}\n` +
+                              href={`https://wa.me/5561996324598?text=${encodeURIComponent(
+                                `💈 *CONFIRMAÇÃO DE AGENDAMENTO - NAVALHA & HONRA*\n\n` +
+                                `Olá! Gostaria de confirmar os detalhes da minha reserva:\n` +
                                 `• *Serviço:* ${svc?.name} (${svc?.durationMinutes} min)\n` +
                                 `• *Barbeiro:* ${brb?.name}\n` +
                                 `• *Data:* ${app.date.split('-').reverse().join('/')} às ${app.time}\n` +
+                                `• *Código:* #${app.id}\n` +
+                                `• *Cliente:* ${app.clientName}\n` +
                                 `• *Valor:* R$ ${(svc?.price || 0).toFixed(2)}\n` +
                                 `• *Local:* Rua Augusta, 1500 · Jardins, São Paulo - SP`
                               )}`}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#25D366]/40 text-[#25D366] hover:bg-[#25D366]/10 text-[11px] font-semibold transition-colors cursor-pointer"
-                              title="Abrir WhatsApp com detalhes pré-formatados do agendamento"
+                              title="Abrir WhatsApp Web ou App com mensagem pré-formatada via wa.me"
                             >
                               <Phone className="w-3 h-3" />
-                              <span>Lembrete WhatsApp</span>
+                              <span>Enviar via WhatsApp</span>
                             </a>
                           )}
 

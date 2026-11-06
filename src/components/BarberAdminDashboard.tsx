@@ -16,6 +16,8 @@ import {
   X,
   Send,
   Mail,
+  LogOut,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,6 +39,7 @@ interface BarberAdminDashboardProps {
   onScheduleOneDayReminder: (appointmentId: string) => Promise<void>;
   onScheduleAllReminders: () => Promise<void>;
   onRescheduleAppointment?: (appointmentId: string, newDate: string, newTime: string, reason?: string) => void;
+  onLogout?: () => void;
 }
 
 const PIE_COLORS = [
@@ -60,6 +63,7 @@ export const BarberAdminDashboard: React.FC<BarberAdminDashboardProps> = ({
   onScheduleOneDayReminder,
   onScheduleAllReminders,
   onRescheduleAppointment,
+  onLogout,
 }) => {
   const [selectedBarberFilter, setSelectedBarberFilter] = useState('all');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
@@ -218,10 +222,22 @@ export const BarberAdminDashboard: React.FC<BarberAdminDashboardProps> = ({
 
             <button
               onClick={onCloseAdminView}
-              className="px-4 py-2.5 rounded-xl bg-[#1C1C24] border border-[#2E2E3A] text-xs sm:text-sm font-semibold text-[#A1A1AA] hover:text-[#F4F4EE] transition-colors"
+              className="px-4 py-2.5 rounded-xl bg-[#1C1C24] border border-[#2E2E3A] text-xs sm:text-sm font-semibold text-[#A1A1AA] hover:text-[#F4F4EE] transition-colors cursor-pointer"
+              title="Voltar para a visualização do cliente"
             >
               Voltar ao Site
             </button>
+
+            {onLogout && (
+              <button
+                onClick={onLogout}
+                className="px-3.5 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/50 border border-red-800/60 text-xs sm:text-sm font-semibold text-red-300 hover:text-red-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+                title="Encerrar sessão autenticada do painel do barbeiro"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sair</span>
+              </button>
+            )}
           </div>
         </div>
 

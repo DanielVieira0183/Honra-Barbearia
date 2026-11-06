@@ -1,4 +1,4 @@
-import { Calendar, Scissors, ShieldCheck, User as UserIcon, LogOut, Crown, Bell } from 'lucide-react';
+import { Calendar, Scissors, ShieldCheck, User as UserIcon, LogOut, Crown, Bell, Lock } from 'lucide-react';
 import { User } from 'firebase/auth';
 
 interface NavbarProps {
@@ -94,14 +94,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Alternar visão Cliente / Painel do Barbeiro */}
           <button
             onClick={onToggleAdminView}
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+            className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer ${
               isAdminView
                 ? 'bg-[#D4AF37] text-[#121215] border-[#D4AF37]'
                 : 'bg-[#1C1C22] text-[#A1A1AA] border-[#2A2A32] hover:text-[#F4F4EE] hover:border-[#3E3E48]'
             }`}
-            title="Acessar visão de gestão e agenda diária dos barbeiros"
+            title={isAdminView ? 'Retornar para a visão pública do cliente' : 'Acessar painel do barbeiro (Requer login: usuário e senha)'}
           >
-            <ShieldCheck className="w-4 h-4" />
+            {isAdminView ? <ShieldCheck className="w-4 h-4" /> : <Lock className="w-3.5 h-3.5 text-[#D4AF37]" />}
             <span>{isAdminView ? 'Modo Cliente' : 'Painel Barbeiro'}</span>
           </button>
 

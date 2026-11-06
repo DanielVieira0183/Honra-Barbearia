@@ -23,9 +23,22 @@ const firebaseConfig = {
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || rawFirebaseConfig.messagingSenderId || '',
 };
 
-// Inicializar Firebase singleton
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+// Inicializar Firebase singleton de forma segura
+let app: any = null;
+let authInstance: any = null;
+
+if (firebaseApiKey) {
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    authInstance = getAuth(app);
+  } catch (err) {
+    console.warn('Aviso: Falha ao inicializar Firebase Auth com a chave configurada:', err);
+  }
+} else {
+  console.info('Firebase Auth: Chave de API (VITE_FIREBASE_API_KEY) não configurada no .env. Autenticação Google permanecerá inativa até configuração.');
+}
+
+export const auth = authInstance;
 
 // Provider com os escopos do Google Workspace (Calendar, Tasks e Gmail)
 export const SCOPES = [
@@ -57,6 +70,10 @@ export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
+  if (!auth) {
+    if (onAuthFailure) onAuthFailure();
+    return () => {};
+  }
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
       if (cachedAccessToken) {
@@ -73,7 +90,7 @@ export const initAuth = (
 };
 
 export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
-  if (!firebaseApiKey) {
+  if (!firebaseApiKey || !auth) {
     throw new Error('Chave de API do Firebase não configurada. Defina VITE_FIREBASE_API_KEY no arquivo .env.');
   }
   try {
@@ -98,7 +115,9 @@ export const getAccessToken = async (): Promise<string | null> => {
 };
 
 export const logoutGoogle = async () => {
-  await signOut(auth);
+  if (auth) {
+    await signOut(auth);
+  }
   cachedAccessToken = null;
 };
 
@@ -427,7 +446,7 @@ export const sendBookingConfirmationEmail = async (
     throw new Error('Usuário não conectado ao Google Workspace.');
   }
 
-  const recipient = appointment.clientEmail?.trim() || auth.currentUser?.email;
+  const recipient = appointment.clientEmail?.trim() || auth?.currentUser?.email;
   if (!recipient || recipient === 'cliente@email.com') {
     throw new Error('E-mail válido do cliente é necessário para enviar a confirmação.');
   }

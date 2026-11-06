@@ -249,26 +249,26 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       }
     }
 
-    // Gerar mensagem e URL pré-formatada para lembrete via WhatsApp com serviço, data e barbeiro
+    // Gerar mensagem e URL pré-formatada para WhatsApp com serviço, barbeiro, data e hora
     const formattedDate = selectedDate.split('-').reverse().join('/');
     const whatsAppText =
-`💈 *LEMBRETE DE AGENDAMENTO - NAVALHA & HONRA*
+`💈 *CONFIRMAÇÃO DE AGENDAMENTO - NAVALHA & HONRA*
 
-Olá! Gostaria de confirmar meu agendamento e solicitar o envio de lembrete via WhatsApp:
+Olá! Gostaria de confirmar os detalhes do meu agendamento na barbearia:
 
 📋 *DETALHES DO AGENDAMENTO:*
+• *Serviço:* ${selectedService.name} (${selectedService.durationMinutes} min)
+• *Barbeiro:* ${targetBarber.name}
+• *Data:* ${formattedDate}
+• *Hora:* às ${newAppointment.time}
 • *Código da Reserva:* #${newAppointment.id}
 • *Cliente:* ${newAppointment.clientName}
-• *Serviço:* ${selectedService.name} (${selectedService.durationMinutes} min)
-• *Mestre Barbeiro:* ${targetBarber.name}
-• *Data:* ${formattedDate}
-• *Horário:* às ${newAppointment.time}
-• *Valor no Local:* R$ ${selectedService.price.toFixed(2)}
+• *Valor:* R$ ${selectedService.price.toFixed(2)}
 • *Local:* Rua Augusta, 1500 · Jardins, São Paulo - SP
 
-Por favor, enviem a confirmação e o lembrete antes do horário marcado. Muito obrigado!`;
+Por favor, confirmem o agendamento. Muito obrigado!`;
 
-    const whatsAppUrl = `https://wa.me/5511999998888?text=${encodeURIComponent(whatsAppText)}`;
+    const whatsAppUrl = `https://wa.me/5561996324598?text=${encodeURIComponent(whatsAppText)}`;
     setWhatsAppData({ url: whatsAppUrl, text: whatsAppText });
 
     // Gerar mensagem e URI pré-formatada para lembrete via SMS (API nativa de mensagens do dispositivo)
@@ -881,6 +881,22 @@ Local: Rua Augusta, 1500 - Jardins, SP. Favor confirmar envio do lembrete!`;
                 </div>
               </div>
 
+              {/* Botão de Destaque Imediato: Enviar via WhatsApp */}
+              {whatsAppData && (
+                <div className="max-w-md mx-auto">
+                  <a
+                    href={whatsAppData.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-[#121215] font-bold text-sm transition-all shadow-lg shadow-[#25D366]/25 hover:shadow-[#25D366]/40 cursor-pointer"
+                    title="Abrir WhatsApp Web ou App com mensagem pré-formatada via wa.me contendo serviço, barbeiro, data e hora"
+                  >
+                    <MessageCircle className="w-5 h-5 fill-[#121215]" />
+                    <span>Enviar via WhatsApp</span>
+                  </a>
+                </div>
+              )}
+
               {syncMessage && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-800 text-xs text-emerald-300">
                   <Check className="w-3.5 h-3.5" />
@@ -950,7 +966,7 @@ Local: Rua Augusta, 1500 - Jardins, SP. Favor confirmar envio do lembrete!`;
                 </div>
               )}
 
-              {/* Card de Lembrete via WhatsApp com Mensagem Pré-Formatada */}
+              {/* Card de Enviar via WhatsApp com Mensagem Pré-Formatada via API wa.me */}
               {whatsAppData && (
                 <div className="max-w-md mx-auto p-4 rounded-xl bg-gradient-to-br from-[#122219] to-[#141C18] border border-[#25D366]/50 text-left space-y-3 shadow-lg shadow-black/40">
                   <div className="flex items-center justify-between">
@@ -960,15 +976,15 @@ Local: Rua Augusta, 1500 - Jardins, SP. Favor confirmar envio do lembrete!`;
                       </div>
                       <div>
                         <div className="text-xs font-bold text-[#F4F4EE]">
-                          Lembrete via WhatsApp
+                          Enviar via WhatsApp
                         </div>
                         <div className="text-[11px] text-[#25D366] font-medium">
-                          Mensagem pronta com serviço, data e barbeiro
+                          Mensagem pré-formatada (serviço, barbeiro, data e hora)
                         </div>
                       </div>
                     </div>
                     <span className="text-[10px] font-mono text-[#A1A1AA] bg-[#0E1712] px-2 py-0.5 rounded border border-[#25D366]/30">
-                      (11) 99999-8888
+                      (61) 99632-4598
                     </span>
                   </div>
 
@@ -982,9 +998,10 @@ Local: Rua Augusta, 1500 - Jardins, SP. Favor confirmar envio do lembrete!`;
                       target="_blank"
                       rel="noreferrer"
                       className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#25D366] hover:bg-[#20ba5a] text-[#121215] font-bold text-xs transition-all shadow-md shadow-[#25D366]/20 cursor-pointer"
+                      title="Abrir WhatsApp Web ou App com mensagem pré-formatada via wa.me"
                     >
-                      <Phone className="w-4 h-4" />
-                      <span>Abrir WhatsApp com Lembrete</span>
+                      <MessageCircle className="w-4 h-4 fill-[#121215]" />
+                      <span>Enviar via WhatsApp</span>
                     </a>
                     <button
                       type="button"
